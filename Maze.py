@@ -23,7 +23,7 @@ def generateMaze(width, height):
 	Keep on adding wall segments to the Maze at random, but ensure that each 
 	new segment touches an existing wall at one end, and has its other end 
 	in an unmade portion of the Maze. If you ever added a wall segment where 
-	both ends were separate from the rest of the Maze, that would create 
+	both ends were separate from the rest of the Maze, that would create  
 	a detached wall with a loop around it, and if you ever added a segment 
 	such that both ends touch the Maze, that would create an inaccessible area.'''
 
@@ -36,14 +36,97 @@ def generateMaze(width, height):
 	for i in range(height):
 		grid[0][i].setType("WALL")
 		grid[-1][i].setType("WALL")
+
+
+	while True:
+		cell = randomWall(grid)
+		x, y = cell
+		ranDir = random.choice(["RIGHT", "LEFT", "UP", "DOWN"])
+		if ranDir == "RIGHT":
+			segLength = random.randint(width//3, width)
+			for i in range(segLength):
+				if canMove(grid, cell, ranDir):
+					x+=1
+					grid[x][y].setType("WALL")
+				else:
+					break
+
+				
+		elif ranDir == "LEFT":
+			segLength = random.randint(width//3, width)
+			for i in range(segLength):
+				if canMove(grid, cell, ranDir):
+					x-=1
+					grid[x][y].setType("WALL")
+				else:
+					break
+				
+		elif ranDir == "UP": 
+			segLength = random.randint(height//3, height)
+			for i in range(segLength):
+				if canMove(grid, cell, ranDir):
+					y-=1
+					grid[x][y].setType("WALL")
+				else:
+					break
+				 
+		elif ranDir == "DOWN":
+			segLength = random.randint(height//3, height)
+			for i in range(segLength):
+				if canMove(grid, cell, ranDir):
+					y+=1
+					grid[x][y].setType("WALL")
+				else:
+					break
+			
+
+		printMaze(grid)
 	grid[0][1].setType("START")
 	grid[-1][-2].setType("END")
 
-	dice = random.randint(0, 3)
-	#use random four to get the index of a random cell on the exterior wall
 
-	return grid
+	
+def canMove(grid, cell, d):
+	x, y = cell
+	if d == "RIGHT" and x + 2 < len(grid):
+		for dx in [1, 2]:
+			for dy in [-1, 0, 1]:
+				if grid[x+dx][y+dy].getType() != "PATH":
+					return False
+		return True
 
+	elif d == "LEFT" and x - 2 >= 0:
+		for dx in [-1, -2]:
+			for dy in [-1, 0, 1]:
+				if grid[x+dx][y+dy].getType() != "PATH":
+					return False
+		return True
+	elif d == "UP" and y - 2 >= 0:
+		for dy in [-1, -2]:
+			for dx in [-1, 0, 1]:
+				if grid[x+dx][y+dy].getType() != "PATH":
+					return False
+		return True
+	elif d == "DOWN" and y + 2 < len(grid[0]):
+		for dy in [1, 2]:
+			for dx in [-1, 0, 1]:
+				if grid[x+dx][y+dy].getType() != "PATH":
+					return False
+		return True
+
+
+def randomWall(matrix):
+	cells = []
+	for i in range(len(matrix)):
+		for j in range(len(matrix[0])):
+			if matrix[i][j].getType() == "WALL":
+				cells.append((i, j))
+
+	if not cells:
+		return None  # Return None if no cell with value 0 is found
+
+	randomCell = random.choice(cells)
+	return randomCell
 
 def printMaze(grid):
 	'''Prints a maze generated using the generateMaze function.
@@ -60,4 +143,4 @@ def printMaze(grid):
 				print("O",  end='')
 		print("")
 
-printMaze(generateMaze(10, 10))
+printMaze(generateMaze(20, 20))
