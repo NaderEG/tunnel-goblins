@@ -27,7 +27,8 @@ def generateMaze(width, height):
 	a detached wall with a loop around it, and if you ever added a segment 
 	such that both ends touch the Maze, that would create an inaccessible area.'''
 
-	grid = [[Tile() for _ in range(width)] for _ in range(height)]
+	grid = [[Tile() for _ in range(height)] for _ in range(width)]
+	print(len(grid), len(grid[0]))
 
 	for i in range(width):
 		grid[i][0].setType("WALL")
@@ -43,7 +44,7 @@ def generateMaze(width, height):
 		x, y = cell
 		ranDir = random.choice(["RIGHT", "LEFT", "UP", "DOWN"])
 		if ranDir == "RIGHT":
-			segLength = random.randint(width//3, width)
+			segLength = width
 			for i in range(segLength):
 				if canMove(grid, cell, ranDir):
 					x+=1
@@ -53,7 +54,7 @@ def generateMaze(width, height):
 
 				
 		elif ranDir == "LEFT":
-			segLength = random.randint(width//3, width)
+			segLength = width
 			for i in range(segLength):
 				if canMove(grid, cell, ranDir):
 					x-=1
@@ -62,7 +63,7 @@ def generateMaze(width, height):
 					break
 				
 		elif ranDir == "UP": 
-			segLength = random.randint(height//3, height)
+			segLength = height
 			for i in range(segLength):
 				if canMove(grid, cell, ranDir):
 					y-=1
@@ -71,7 +72,7 @@ def generateMaze(width, height):
 					break
 				 
 		elif ranDir == "DOWN":
-			segLength = random.randint(height//3, height)
+			segLength = height
 			for i in range(segLength):
 				if canMove(grid, cell, ranDir):
 					y+=1
@@ -143,4 +144,4 @@ def printMaze(grid):
 				print("O",  end='')
 		print("")
 
-printMaze(generateMaze(20, 20))
+printMaze(generateMaze(100, 100))
