@@ -13,6 +13,15 @@ class Goblin:
 	def reproduce(self, other):
 		splitPoint = random.randint(0, len(self.dna)-1)
 		newDna = self.dna[0:splitPoint] + other.dna[splitPoint:]
+		print(newDna)
+		i = 0
+		for d in newDna:
+			probability = random.random()
+			if probability < 0.1:
+				print("random mutation at", i)
+				newDna[i] = random.choice(["up", "down", "left", "right"].remove(d))
+			i+=1
+		print(newDna)
 		return Goblin(len(newDna), newDna)
 
 	def step(self, m):
@@ -32,3 +41,7 @@ class Goblin:
 		return ((m.cols-1 - self.x)**2 + (m.rows-1 - self.y)**2)**0.5 
 
 
+mom = Goblin(10)
+dad = Goblin(10)
+child = mom.reproduce(dad)
+print(child.dna)
