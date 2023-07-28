@@ -10,10 +10,12 @@ class Goblin:
 			self.dna = random.choices(options, k=dnaSize)
 		self.x = self.y = 0
 		self.stepsTaken = 0
+		self.explorer = 0
 		self.success = False
+		self.finished = False
 
 		self.backTracking = 0
-		self.posRecord = []
+		self.posRecord = [(self.x, self.y)]
 		self.collisions = 0
 		self.distance = float('inf')
 		self.fitness = 0
@@ -21,11 +23,10 @@ class Goblin:
 	def reproduce(self, other):
 		splitPoint = random.randint(0, len(self.dna)-1)
 		newDna = self.dna[0:splitPoint] + other.dna[splitPoint:]
-		print(newDna)
 		i = 0
 		for d in newDna:
 			probability = random.random()
-			if probability < 0.1:
+			if probability < 0.01:
 				dirs = ["up", "down", "left", "right"]
 				dirs.remove(d)
 				newDna[i] = random.choice(dirs)
@@ -33,19 +34,24 @@ class Goblin:
 		return Goblin(len(newDna), newDna)
 
 	def step(self, m):
-		self.posRecord.append((self.x, self.y))
-		if self.canMove(m, self.dna[self.stepsTaken]):
+		
+		if not self.finished and self.canMove(m, self.dna[self.stepsTaken]) :
 			self.y = self.y-1 if self.dna[self.stepsTaken] == "up" else self.y
 			self.y = self.y+1 if self.dna[self.stepsTaken] == "down" else self.y
 			self.x = self.x-1 if self.dna[self.stepsTaken] == "left" else self.x
 			self.x = self.x+1 if self.dna[self.stepsTaken] == "right" else self.x
+			if not m.grid[self.x + self.y*m.cols].explored:
+				self.explorer+=1
+				m.grid[self.x + self.y*m.cols].explored = True
+
 		else:
 			self.collisions+=1 #penalized for colliding with walls
 		if (self.x, self.y) in self.posRecord:
 			self.backTracking+=1 #penalized for backtracking
 		self.stepsTaken+=1
-		self.isSuccess()
-		self.isFinished()
+		self.posRecord.append((self.x, self.y))
+		self.isSuccess(m)
+		self.isFinished(m)
 		
 
 
@@ -64,15 +70,21 @@ class Goblin:
 
 	def isSuccess(self, m):
 		if self.x == m.cols-1 and self.y == m.rows-1:
-			self.finished = True
 			self.success = True
-			self.distance = self.getDistance(m)
 
 	def isFinished(self, m):
 		if self.stepsTaken == len(self.dna):
 			self.distance = self.getDistance(m) #penalized for being far from the goal
 			self.finished = True
-			self.fitness = self.backTracking + self.collisions + self.distance
+			self.calculateFitness()
+
+	def calculateFitness(self):
+		collisionWeight = 3
+		backtrackWeight = 3
+		distanceWeight = 1
+		explorerWeight = 2
+
+		self.fitness = (explorerWeight*self.explorer - collisionWeight*self.collisions - backtrackWeight*self.backTracking - distanceWeight*self.distance)
 
 
 
@@ -87,10 +99,33 @@ class Population:
 	def isGenerationSuccessful(self):
 		return any(goblin.success for goblin in self.generation)
 
+	def getSuccessfulGoblin(self):
+		return next((goblin for goblin in self.generation if goblin.success), None)
+
 	def nextGeneration(self):
 		self.genNumber+=1
-		self.generation.sort(key=lambda goblin: goblin.fitness)
+		self.generation.sort(key=lambda goblin: goblin.fitness, reverse=True)
 		splitIndex = len(self.generation) // 2
 		self.generation = self.generation[:splitIndex]
-		for i in range(len(self.generation)//2):
-			self.generation.append(random.choice(self.generation).reproduce(random.choice(self.generation)))
+		for g in self.generation:
+			g.x = g.y = 0
+			g.stepsTaken = 0
+			g.success = False
+			g.finished = False
+			g.explorer = 0
+			g.backTracking = 0
+			g.posRecord = []
+			g.collisions = 0
+			g.distance = float('inf')
+			g.fitness = 0
+			children = []
+		for i in range(len(self.generation)):
+			children.append(random.choice(self.generation[:len(self.generation)//5]).reproduce(random.choice(self.generation)))
+		self.generation.extend(children)
+
+	def generationalStep(self, m):
+		for goblin in self.generation:
+			goblin.step(m)
+		if self.isGenerationDone():
+			self.nextGeneration()
+

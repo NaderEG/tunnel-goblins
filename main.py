@@ -10,6 +10,7 @@ cols, rows = WIDTH // TILE, HEIGHT // TILE
 pygame.init()
 sc = pygame.display.set_mode(RES)
 clock = pygame.time.Clock()
+font = pygame.font.Font(None, 36)
 
 def drawStartAndEnd():
 	pygame.draw.rect(sc, pygame.Color('green'), (2, 2, TILE-2, TILE-2))
@@ -33,12 +34,19 @@ def drawCell(cell):
 	if cell.walls['left']:
 		pygame.draw.line(sc, pygame.Color('darkorange'), (x, y+TILE), (x, y), 2)
 
-def drawGoblin(g):
-	x, y = g.x*TILE, g.y*TILE
-	pygame.draw.rect(sc, pygame.Color('darkgreen'), (x+2, y+2, TILE-2, TILE-2))
+def drawGeneration(gen):
+	for g in gen:
+		x, y = g.x*TILE, g.y*TILE
+		pygame.draw.rect(sc, pygame.Color('darkgreen'), (x+2, y+2, TILE-2, TILE-2))
+
+def drawGenNumber(g):
+	text = "Generation: " + str(g.genNumber)
+	text_surface = font.render(text, True, pygame.Color('white'))
+	sc.blit(text_surface, (WIDTH - text_surface.get_width()-10,text_surface.get_height()))
 
 mo = mole.Mole(cols, rows)
-g = population.Goblin(rows*cols)
+g = population.Population(50, 2*rows*cols)
+successCoords = []
 while True:
 	sc.fill(pygame.Color('darkslategray')) 
 
@@ -47,20 +55,25 @@ while True:
 			exit()
 
 	if mo.digging:
-		[drawCell(cell) for cell in mo.grid]
+		[drawCell(cell) for cell in mo.grid] 
 		drawCurrentCell(mo.currentCell)
 		mo.dig()
-	elif g.stepsTaken < len(g.dna)-1:
+	elif not g.isGenerationSuccessful():
 		[drawCell(cell) for cell in mo.grid]
 		drawStartAndEnd()
-		g.step(mo)
-		drawGoblin(g)
-		print(g.dna[g.stepsTaken])
+		g.generationalStep(mo)
+		drawGeneration(g.generation)
+		drawGenNumber(g)
 		
 	else:
 		[drawCell(cell) for cell in mo.grid]
+		if not successCoords:
+			winner = g.getSuccessfulGoblin()
+			for point in winner.posRecord:
+				successCoords.append((point[0]*TILE+TILE*0.5, point[1]*TILE+TILE*0.5))
+		pygame.draw.lines(sc, pygame.Color('beige'), False, successCoords, 2)
+		drawGenNumber(g)
 		drawStartAndEnd()
-		drawGoblin(g)
 	pygame.display.flip()
 	clock.tick(30)
 
