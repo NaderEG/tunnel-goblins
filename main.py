@@ -1,5 +1,6 @@
 import pygame
 import mole
+import population
 
 RES = WIDTH, HEIGHT = 1202, 902
 TILE = 100
@@ -18,7 +19,7 @@ def drawCurrentCell(cell):
 	x, y = cell.x*TILE, cell.y*TILE
 	pygame.draw.rect(sc, pygame.Color('saddlebrown'), (x+2, y+2, TILE-2, TILE-2))
 
-def draw(cell):
+def drawCell(cell):
 	x, y = cell.x *TILE, cell.y*TILE
 	if cell.visited:
 		pygame.draw.rect(sc, pygame.Color('black'), (x, y, TILE, TILE))
@@ -32,8 +33,12 @@ def draw(cell):
 	if cell.walls['left']:
 		pygame.draw.line(sc, pygame.Color('darkorange'), (x, y+TILE), (x, y), 2)
 
-mo = mole.Mole(cols, rows)
+def drawGoblin(g):
+	x, y = g.x*TILE, g.y*TILE
+	pygame.draw.rect(sc, pygame.Color('darkgreen'), (x+2, y+2, TILE-2, TILE-2))
 
+mo = mole.Mole(cols, rows)
+g = population.Goblin(rows*cols)
 while True:
 	sc.fill(pygame.Color('darkslategray')) 
 
@@ -42,12 +47,20 @@ while True:
 			exit()
 
 	if mo.digging:
-		[draw(cell) for cell in mo.grid]
+		[drawCell(cell) for cell in mo.grid]
 		drawCurrentCell(mo.currentCell)
 		mo.dig()
-	else:
-		[draw(cell) for cell in mo.grid]
+	elif g.stepsTaken < len(g.dna)-1:
+		[drawCell(cell) for cell in mo.grid]
 		drawStartAndEnd()
+		g.step(mo)
+		drawGoblin(g)
+		print(g.dna[g.stepsTaken])
+		
+	else:
+		[drawCell(cell) for cell in mo.grid]
+		drawStartAndEnd()
+		drawGoblin(g)
 	pygame.display.flip()
 	clock.tick(30)
 
